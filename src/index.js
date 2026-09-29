@@ -14,11 +14,18 @@ const paymentRoutes = require("./routes/payments");
 
 const app = express();
 const port = Number(process.env.PORT) || 4000;
-const frontendUrl = process.env.FRONTEND_URL || "https://talatk.in";
+const frontendUrls = [
+  ...(process.env.FRONTEND_URL || "https://talatk.in")
+    .split(",")
+    .map((url) => url.trim())
+    .filter(Boolean),
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
 
 app.use(
   cors({
-    origin: frontendUrl,
+    origin: frontendUrls,
     credentials: true,
   })
 );

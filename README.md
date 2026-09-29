@@ -14,7 +14,9 @@ Set these environment variables in Render:
 
 - `MONGODB_URI`: MongoDB Atlas connection string
 - `JWT_SECRET`: long random signing secret
-- `FRONTEND_URL`: deployed frontend origin, such as `https://your-app.vercel.app`
+- `FRONTEND_URL`: allowed frontend origins, such as `https://your-app.vercel.app`; separate multiple origins with commas
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`: SMTP server settings (Gmail defaults are in `render.yaml`)
+- `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: sender account, app password, and from address; configure these in Render
 - `RAZORPAY_KEY_ID`: Razorpay API key ID
 - `RAZORPAY_KEY_SECRET`: Razorpay API key secret
 - `RAZORPAY_WEBHOOK_SECRET`: webhook secret configured in the Razorpay dashboard

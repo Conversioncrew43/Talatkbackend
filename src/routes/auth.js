@@ -44,6 +44,9 @@ async function sendOtp(email, code) {
     });
     return;
   }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SMTP_HOST is required to send verification emails");
+  }
   console.log(`[DEV OTP] ${email}: ${code}`);
 }
 

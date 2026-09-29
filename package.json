@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "node --watch src/index.js",
+    "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed": "node src/seed.js"
   },
