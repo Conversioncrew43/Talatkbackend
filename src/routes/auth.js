@@ -36,6 +36,13 @@ async function sendOtp(email, code) {
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
         : undefined,
     });
+    transporter.verify((error, success) => {
+      if (error) {
+        console.error("SMTP ERROR:", error);
+      } else {
+        console.log("SMTP SERVER IS READY");
+      }
+    });
     await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: email,
