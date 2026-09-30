@@ -1,6 +1,7 @@
 const Booking = require("../models/Booking");
 const User = require("../models/User");
 const { authRequired, requireRole } = require("../middleware/auth");
+const { sendEmail } = require("../lib/email");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 
@@ -17,6 +18,20 @@ function getRazorpay() {
 function validSignature(expected, received) {
   if (!received || expected.length !== received.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received));
+}
+
+async function notifyCoach(booking) {
+  const recipient = process.env.COACH_NOTIFICATION_EMAIL || "talatthecoach@gmail.com";
+  const serviceTitle = booking.serviceId?.title || "Coaching consultation";
+  const clientName = booking.clientId?.name || "New client";
+  const clientEmail = booking.clientId?.email || "No email provided";
+  const appointmentTime = booking.slotId
+    ? new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(booking.slotId.startAt))
+    : "Time to be arranged";
+  const subject = `New paid consultation: ${serviceTitle}`;
+  const text = `A consultation has been successfully booked.\n\nClient: ${clientName}\nEmail: ${clientEmail}\nService: ${serviceTitle}\nTime: ${appointmentTime}\nAmount: INR ${booking.amount}`;
+  const html = `<h2>New paid consultation</h2><p><strong>Client:</strong> ${clientName}</p><p><strong>Email:</strong> ${clientEmail}</p><p><strong>Service:</strong> ${serviceTitle}</p><p><strong>Time:</strong> ${appointmentTime}</p><p><strong>Amount:</strong> INR ${booking.amount}</p>`;
+  await sendEmail({ to: recipient, subject, text, html });
 }
 
 async function markBookingPaid({ orderId, paymentId, amount, currency }) {
@@ -41,6 +56,23 @@ async function markBookingPaid({ orderId, paymentId, amount, currency }) {
     .populate("serviceId")
     .populate("slotId")
     .populate("clientId", "name email role");
+  if (updatedBooking?.paymentStatus === "paid" && !updatedBooking.coachNotificationSentAt) {
+    const claimedBooking = await Booking.findOneAndUpdate(
+      { _id: updatedBooking._id, paymentStatus: "paid", coachNotificationSentAt: null },
+      { $set: { coachNotificationSentAt: new Date() } },
+      { new: true }
+    )
+      .populate("serviceId")
+      .populate("slotId")
+      .populate("clientId", "name email role");
+    if (claimedBooking) {
+      try {
+        await notifyCoach(claimedBooking);
+      } catch (error) {
+        console.error("Coach consultation email failed:", error);
+      }
+    }
+  }
   return updatedBooking?.paymentStatus === "paid" ? updatedBooking : null;
 }
 

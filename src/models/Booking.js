@@ -14,6 +14,7 @@ const bookingSchema = new mongoose.Schema(
     amount: { type: Number, required: true },
     paymentOrderId: { type: String, default: "" },
     paymentId: { type: String, default: "" },
+    coachNotificationSentAt: { type: Date, default: null },
     paymentStatus: {
       type: String,
       enum: ["unpaid", "created", "failed", "paid"],

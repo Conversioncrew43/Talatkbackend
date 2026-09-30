@@ -201,8 +201,10 @@ router.post("/complete-profile", async (req, res) => {
     const otp = await EmailOtp.findOne({ challengeId: req.body.challengeId, verifiedAt: { $ne: null } });
     if (!otp) return res.status(400).json({ error: "Verify your email first" });
     const name = String(req.body.name || "").trim();
+    const phone = String(req.body.phone || "").trim();
     if (!name) return res.status(400).json({ error: "Full name is required" });
-    const user = await User.create({ name, email: otp.email, phone: String(req.body.phone || "").trim(), emailVerified: true, role: isAdminEmail(otp.email) ? "admin" : "client" });
+    if (!phone) return res.status(400).json({ error: "Mobile number is required" });
+    const user = await User.create({ name, email: otp.email, phone, emailVerified: true, role: isAdminEmail(otp.email) ? "admin" : "client" });
     if (!otp.serviceId) return res.status(201).json({ token: signToken(user), user: user.toSafeJSON() });
     const booking = await createBooking({ userId: user._id, serviceId: otp.serviceId, slotId: otp.slotId, holdToken: otp.holdToken, coachWillAssignSlot: otp.coachWillAssignSlot });
     const token = signToken(user);

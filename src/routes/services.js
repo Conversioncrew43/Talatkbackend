@@ -49,4 +49,15 @@ router.patch("/:id", authRequired, requireRole("coach", "admin"), async (req, re
   }
 });
 
+router.delete("/:id", authRequired, requireRole("coach", "admin"), async (req, res) => {
+  try {
+    const service = await Service.findByIdAndDelete(req.params.id);
+    if (!service) return res.status(404).json({ error: "Service not found" });
+    res.json({ success: true, serviceId: req.params.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not delete service" });
+  }
+});
+
 module.exports = router;
