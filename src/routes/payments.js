@@ -22,8 +22,13 @@ function validSignature(expected, received) {
 async function markBookingPaid({ orderId, paymentId, amount, currency }) {
   const booking = await Booking.findOne({ paymentOrderId: orderId });
   if (!booking) return null;
-  if (booking.paymentStatus === "paid") return booking;
   if (amount !== Math.round(booking.amount * 100) || currency !== "INR") return null;
+  if (booking.paymentStatus === "paid") {
+    return Booking.findById(booking._id)
+      .populate("serviceId")
+      .populate("slotId")
+      .populate("clientId", "name email role");
+  }
 
   const status = booking.coachWillAssignSlot && !booking.slotId
     ? "awaiting_coach_slot"
@@ -32,10 +37,11 @@ async function markBookingPaid({ orderId, paymentId, amount, currency }) {
     { _id: booking._id, paymentOrderId: orderId, paymentStatus: { $ne: "paid" }, status: "pending_payment" },
     { $set: { paymentId, paymentStatus: "paid", status } }
   );
-  return Booking.findById(booking._id)
+  const updatedBooking = await Booking.findById(booking._id)
     .populate("serviceId")
     .populate("slotId")
     .populate("clientId", "name email role");
+  return updatedBooking?.paymentStatus === "paid" ? updatedBooking : null;
 }
 
 router.post("/orders", authRequired, requireRole("client"), async (req, res) => {
@@ -108,7 +114,11 @@ router.post("/verify", authRequired, requireRole("client"), async (req, res) => 
       amount: payment.amount,
       currency: payment.currency,
     });
-    return res.json({ paid: true, booking: updated });
+    return res.json({
+      paid: Boolean(updated),
+      booking: updated,
+      ...(!updated ? { message: "Payment is processing. Check again shortly." } : {}),
+    });
   } catch (err) {
     console.error(err);
     return res.status(err.status || 500).json({ error: err.status ? err.message : "Could not verify payment" });

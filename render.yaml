@@ -12,22 +12,12 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         sync: false
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_SECURE
-        value: "false"
-      - key: SMTP_USER
+      - key: BREVO_API_KEY
         sync: false
-      - key: SMTP_PASSWORD
+      - key: BREVO_FROM_EMAIL
         sync: false
-      - key: SMTP_FROM
-        sync: false
-      - key: RESEND_API_KEY
-        sync: false
-      - key: RESEND_FROM
-        sync: false
+      - key: BREVO_FROM_NAME
+        value: Talat K
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET

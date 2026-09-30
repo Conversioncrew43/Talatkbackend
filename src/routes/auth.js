@@ -28,47 +28,42 @@ function hash(value) {
 async function sendOtp(email, code) {
   const subject = "Your Talat K verification code";
   const text = `Your Talat K verification code is ${code}. It expires in 10 minutes.`;
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_FROM_EMAIL;
 
-  if (process.env.RESEND_API_KEY) {
-    if (!process.env.RESEND_FROM) throw new Error("RESEND_FROM is required to send verification emails");
-    const { Resend } = require("resend");
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM,
-      to: email,
-      subject,
-      text,
-      html: `<p>Your Talat K verification code is <strong>${code}</strong>. It expires in 10 minutes.</p>`,
-    });
-    if (error) throw new Error(`Resend email failed: ${error.message}`);
-    return;
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[DEV OTP] ${email}: ${code}`);
   }
 
-  if (process.env.SMTP_HOST) {
-    const nodemailer = require("nodemailer");
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: process.env.SMTP_SECURE === "true",
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      auth: process.env.SMTP_USER
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-        : undefined,
+  if (apiKey && senderEmail) {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: {
+          email: senderEmail,
+          ...(process.env.BREVO_FROM_NAME ? { name: process.env.BREVO_FROM_NAME } : {}),
+        },
+        to: [{ email }],
+        subject,
+        textContent: text,
+        htmlContent: `<p>Your Talat K verification code is <strong>${code}</strong>. It expires in 10 minutes.</p>`,
+      }),
     });
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: email,
-      subject,
-      text,
-    });
+    if (!response.ok) {
+      const details = await response.text();
+      console.error("Brevo email request failed:", response.status, details);
+      throw new Error("Brevo could not send the verification email");
+    }
     return;
   }
   if (process.env.NODE_ENV === "production") {
-    throw new Error("Configure RESEND_API_KEY and RESEND_FROM or SMTP_HOST to send verification emails");
+    throw new Error("Configure BREVO_API_KEY and BREVO_FROM_EMAIL to send verification emails");
   }
-  console.log(`[DEV OTP] ${email}: ${code}`);
 }
 
 async function createBooking({ userId, serviceId, slotId, holdToken, coachWillAssignSlot }) {

@@ -15,16 +15,15 @@ Set these environment variables in Render:
 - `MONGODB_URI`: MongoDB Atlas connection string
 - `JWT_SECRET`: long random signing secret
 - `FRONTEND_URL`: allowed frontend origins, such as `https://your-app.vercel.app`; separate multiple origins with commas
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`: SMTP server settings (Gmail defaults are in `render.yaml`)
-- `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: sender account, app password, and from address; configure these in Render
-- `RESEND_API_KEY`, `RESEND_FROM`: optional HTTPS email delivery settings; recommended for Render Free services because they block outbound SMTP ports
+- `BREVO_API_KEY`: Brevo API key for transactional email
+- `BREVO_FROM_EMAIL`, `BREVO_FROM_NAME`: verified sender address and display name in Brevo
 - `RAZORPAY_KEY_ID`: Razorpay API key ID
 - `RAZORPAY_KEY_SECRET`: Razorpay API key secret
 - `RAZORPAY_WEBHOOK_SECRET`: webhook secret configured in the Razorpay dashboard
 
 In Razorpay, configure a webhook pointing to `https://<your-api-domain>/payments/webhook` and subscribe to `payment.captured` and `payment.failed`. Use the same webhook secret in `RAZORPAY_WEBHOOK_SECRET`. Keep all three Razorpay values server-side; only the key ID is returned to the frontend at checkout.
 
-Set the SMTP and Google Calendar variables from `.env.example` when those features are enabled. Do not commit `.env` or production secrets.
+Set the Brevo and Google Calendar variables from `.env.example` when those features are enabled. Verify the sender domain or address in Brevo before sending. Do not commit `.env` or production secrets.
 
 ## Run locally
 
